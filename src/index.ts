@@ -20,7 +20,7 @@ app.post('/users', async (req, res) => {
 
   try {
     const user = await User.create({ pseudo, email, mdp });
-    res.status(201).json(user);
+    res.status(201).json(user.dataValues);
   } catch (error) {
     console.error("Erreur lors de la création de l'utilisateur :", error);
     res
@@ -29,12 +29,21 @@ app.post('/users', async (req, res) => {
   }
 });
 
-db.authenticate()
-  .then(() =>
-    console.log('Connection to the database has been established successfully.')
-  )
-  .catch((error) => console.error('Unable to connect to the database:', error));
+async function startServer() {
+  try {
+    await db.authenticate();
+    console.log(
+      'Connection to the database has been established successfully.'
+    );
+    await db.sync();
+    console.log('Database synced successfully.');
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+    app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
+  } catch (error) {
+    console.error('Unable to connect to the database:', error);
+  }
+}
+
+startServer();

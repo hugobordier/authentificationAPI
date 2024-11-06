@@ -11,10 +11,8 @@ const db = new Sequelize(databaseUrl, {
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false,
     },
   },
-  logging: true,
 });
 
 export default db;
