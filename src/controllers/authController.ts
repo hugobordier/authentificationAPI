@@ -2,7 +2,6 @@ import AuthService from '../services/authService';
 
 export default class authController {
   static async login(req, res) {
-    console.log(req.body);
     const { email, mdp } = req.body;
 
     try {
@@ -12,12 +11,12 @@ export default class authController {
       );
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        maxAge: 10 * 60 * 1000,
+        maxAge: 600 * 1000,
         sameSite: 'strict',
       });
       res.status(200).json({ accessToken });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(401).json({ error: error.message });
     }
   }
@@ -27,11 +26,9 @@ export default class authController {
 
     try {
       const user = await AuthService.registerUser(pseudo, email, mdp);
-      console.log('text1');
       res.status(200).json(user);
     } catch (error) {
       console.error(error);
-      console.log('test2');
       res.status(401).json({ error: error.message });
     }
   }
@@ -46,9 +43,22 @@ export default class authController {
     try {
       const { accessToken, newRefreshToken } =
         await AuthService.refreshAccessToken(refreshToken);
+      res.cookie('refreshToken', newRefreshToken, {
+        httpOnly: true,
+        maxAge: 600 * 1000,
+        sameSite: 'strict',
+      });
       res.json({ accessToken });
     } catch (error) {
       res.status(403).json({ error: 'Invalid refresh token' });
+    }
+  }
+
+  static async test(req, res) {
+    try {
+      res.status(200).json(req.user);
+    } catch (error) {
+      console.error(error);
     }
   }
 }

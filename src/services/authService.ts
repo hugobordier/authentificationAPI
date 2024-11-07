@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 import User from '../models/User';
 import dotenv from 'dotenv';
 import { UniqueConstraintError, ValidationError } from 'sequelize';
@@ -22,10 +22,10 @@ export default class AuthService {
       throw new Error('Mot de passe incorrect');
     }
 
-    const accessToken = jwt.sign({ userId: user.id }, accessTokenSecret, {
+    const accessToken = jwt.sign(user.dataValues, accessTokenSecret, {
       expiresIn: '1m',
     });
-    const refreshToken = jwt.sign({ userId: user.id }, refreshTokenSecret, {
+    const refreshToken = jwt.sign(user.dataValues, refreshTokenSecret, {
       expiresIn: '10m',
     });
 
@@ -36,7 +36,6 @@ export default class AuthService {
     try {
       const hashedPassword = await bcrypt.hash(mdp, 10);
       const user = await User.create({ pseudo, email, mdp: hashedPassword });
-      console.log(user.dataValues);
       return user.dataValues;
     } catch (error) {
       if (error instanceof UniqueConstraintError) {
@@ -61,5 +60,18 @@ export default class AuthService {
     }
   }
 
-  static async refreshAccessToken(refreshToken: string) {}
+  static async refreshAccessToken(refreshToken: string) {
+    const decodedToken = jwt.verify(refreshToken, refreshTokenSecret);
+    //@ts-ignore
+    const userId = decodedToken.userId as string;
+
+    const accessToken = jwt.sign({ userId: userId }, accessTokenSecret, {
+      expiresIn: '1m',
+    });
+    const newRefreshToken = jwt.sign({ userId: userId }, refreshTokenSecret, {
+      expiresIn: '10m',
+    });
+
+    return { accessToken, newRefreshToken };
+  }
 }
