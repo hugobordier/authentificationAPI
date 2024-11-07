@@ -1,33 +1,29 @@
 import express from 'express';
 import cors from 'cors';
 import db from './config/config';
-import User from './models/User';
+import authRoutes from './routes/authRoutes';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 
 const port = 3000;
 
-app.use(express.json());
+app.use(cookieParser());
 
-app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  })
+);
+
+app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-app.post('/users', async (req, res) => {
-  const { pseudo, email, mdp } = req.body;
-
-  try {
-    const user = await User.create({ pseudo, email, mdp });
-    res.status(201).json(user.dataValues);
-  } catch (error) {
-    console.error("Erreur lors de la création de l'utilisateur :", error);
-    res
-      .status(400)
-      .json({ error: "Impossible de créer l'utilisateur", details: error });
-  }
-});
+app.use('/auth', authRoutes);
 
 async function startServer() {
   try {
